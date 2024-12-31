@@ -1,0 +1,106 @@
+---
+title: "SQL moria"
+format: html
+self-contained: true
+toc: true
+---
+
+```{r}
+con_chocolate <- DBI::dbConnect(drv = RSQLite::SQLite(),
+dbname = "chocolate.sqlite")
+```
+
+
+```{sql, connection = con_chocolate, output.var = "try"}
+select Name, candy_names
+from salesreps 
+left join orders USING (srid)
+left join products using (pid)
+where orders.sale_date between '2022-04-01' AND '2022-06-31' 
+  and pid = (select pid 
+from orders
+ where sale_date between '2022-01-01' AND '2022-03-31' 
+ group by pid
+ order by sum(amount) desc
+ limit 1)
+ group by srid
+ order by sum(orders.amount) desc
+ limit 1
+
+```
+
+**Q1**
+
+You are a data scientist at Strauss-Elite. Your boss hands you a data request. You said you would get to it the next day - but when you awoke the next morning you found the following query typed out on your computer, having no recollection of writing it, nor can you find your boss’s original request.
+
+1.  Assuming you got it right - what did your boss want? Explain the query.
+
+2.  Run the query - what is the answer?
+
+```{sql, connection = con_chocolate, output.var = "my_output_df"}
+SELECT salesreps.Name, SUM(orders.amount) AS total_candy_bars_sold
+FROM salesreps INNER JOIN orders USING (srid)
+WHERE
+orders.sale_date BETWEEN '2022-01-01' AND '2022-12-31'
+AND salesreps.year_joined = 2010
+GROUP BY salesreps.Name;
+```
+
+**A1**
+
+1.  The boss wanted to receive the name and the sum of all candy bars sales for each salesreps in 2022, for salesreps who joined the company in 2010.
+The query unites the salesreps and orders tables, leaving only sales that took place in 2022 and sellers that started working in 2010. The query displays for each salesreps the sum of orders he sold for that year
+
+2.  the answer is a table of three sales rep and the sum of candy bar they sold in 2020
+
+| Name                | total candy bars sold |
+|---------------------|-----------------------|
+| Tootle, Naudia      | 1825                  |
+| al-Farrah, Ghaaliba | 1866                  |
+| al-Sadri, Saamyya   | 1784                  |
+
+**Q2**
+
+Generate a frequency table of the number of times a customer made an order. It should have two columns:
+
+1.  total_orders - the number of orders made by a customer.
+
+2.  N - the number of customers that made total_orders orders
+
+```{sql, connection = con_chocolate, output.var = "Q2"}
+select total_orders, count(cid) as N
+from(
+select cid, count(cid) as total_orders
+  from orders
+  group by cid
+  order by count(cid) )
+  group by total_orders
+
+```
+
+**Q3**
+
+In a single query:
+
+• Identify the candy bar with the highest number of total orders in the first quarter of 2022.
+
+• What is the name of the sales rep that sold the most of those candy bars in the second quarter of 2022? (Supply both the answer and the query.)
+
+**A3**
+
+```{sql, connection = con_chocolate, output.var = "Q3"}
+select Name, candy_names
+from salesreps 
+left join orders USING (srid)
+left join products using (pid)
+where orders.sale_date between '2022-04-01' AND '2022-06-31' 
+  and pid = (select pid 
+from orders
+ where sale_date between '2022-01-01' AND '2022-03-31' 
+ group by pid
+ order by sum(amount) desc
+ limit 1)
+ group by srid
+ order by sum(orders.amount) desc
+ limit 1
+```
