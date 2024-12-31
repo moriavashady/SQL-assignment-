@@ -11,24 +11,6 @@ dbname = "chocolate.sqlite")
 ```
 
 
-```{sql, connection = con_chocolate, output.var = "try"}
-select Name, candy_names
-from salesreps 
-left join orders USING (srid)
-left join products using (pid)
-where orders.sale_date between '2022-04-01' AND '2022-06-31' 
-  and pid = (select pid 
-from orders
- where sale_date between '2022-01-01' AND '2022-03-31' 
- group by pid
- order by sum(amount) desc
- limit 1)
- group by srid
- order by sum(orders.amount) desc
- limit 1
-
-```
-
 **Q1**
 
 You are a data scientist at Strauss-Elite. Your boss hands you a data request. You said you would get to it the next day - but when you awoke the next morning you found the following query typed out on your computer, having no recollection of writing it, nor can you find your boss’s original request.
